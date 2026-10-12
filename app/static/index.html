@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>میز خصوصی بازار</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div>
+      <h1>میز خصوصی بازار</h1>
+      <p class="muted">فقط خواندن از متاتریدر ۵ — سفارش از اینجا ارسال نمی‌شود</p>
+    </div>
+    <div id="account-chip" class="chip">حساب بارگذاری نشده</div>
+  </header>
+
+  <section class="row">
+    <label>نماد
+      <input id="symbol" value="XAUUSD" />
+    </label>
+    <button id="load">وضعیت بازار</button>
+    <button id="brief" class="primary">مشاوره ساخت‌یافته</button>
+  </section>
+
+  <section id="tick" class="card"></section>
+  <section id="frames" class="grid"></section>
+  <section id="briefing" class="card"></section>
+  <section id="positions" class="card"></section>
+  <p id="error" class="error"></p>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
