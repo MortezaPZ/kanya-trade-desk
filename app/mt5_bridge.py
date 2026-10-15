@@ -29,18 +29,21 @@ def _mt5():
 
 def initialize() -> None:
     mt5 = _mt5()
-    kwargs: dict[str, Any] = {}
+    login_kw: dict[str, Any] = {"timeout": 4_000}
+    if settings.mt5_portable:
+        login_kw["portable"] = True
+    attempts: list[dict[str, Any]] = []
     if settings.mt5_path:
-        kwargs["path"] = settings.mt5_path
-    if settings.mt5_login and settings.mt5_password and settings.mt5_server:
-        kwargs.update(
-            login=int(settings.mt5_login),
-            password=settings.mt5_password,
-            server=settings.mt5_server,
-        )
-    ok = mt5.initialize(**kwargs) if kwargs else mt5.initialize()
-    if not ok:
-        raise RuntimeError(f"MT5 initialize failed: {mt5.last_error()}")
+        attempts.append({**login_kw, "path": settings.mt5_path})
+    attempts.append(dict(login_kw))
+    errors = []
+    for kwargs in attempts:
+        mt5.shutdown()
+        ok = mt5.initialize(**kwargs)
+        if ok:
+            return
+        errors.append(str(mt5.last_error()))
+    raise RuntimeError("MT5 initialize failed: " + " | ".join(errors))
 
 
 def shutdown() -> None:
@@ -79,8 +82,6 @@ def symbols() -> list[dict[str, Any]]:
         raise RuntimeError(f"symbols_get failed: {mt5.last_error()}")
     out = []
     for s in items:
-        if not s.visible:
-            continue
         out.append(
             {
                 "name": s.name,
@@ -89,9 +90,47 @@ def symbols() -> list[dict[str, Any]]:
                 "digits": s.digits,
                 "point": s.point,
                 "trade_contract_size": s.trade_contract_size,
+                "trade_tick_size": s.trade_tick_size,
+                "trade_tick_value": s.trade_tick_value,
+                "volume_min": s.volume_min,
+                "volume_step": s.volume_step,
+                "volume_max": s.volume_max,
+                "visible": bool(s.visible),
             }
         )
     return out
+
+
+def connected() -> bool:
+    try:
+        mt5 = _mt5()
+    except RuntimeError:
+        return False
+    info = mt5.terminal_info()
+    return info is not None
+
+
+def symbol_spec(symbol: str) -> dict[str, Any]:
+    mt5 = _mt5()
+    if not mt5.symbol_select(symbol, True):
+        raise RuntimeError(f"symbol_select failed for {symbol}: {mt5.last_error()}")
+    info = mt5.symbol_info(symbol)
+    if info is None:
+        raise RuntimeError(f"symbol_info failed for {symbol}: {mt5.last_error()}")
+    d = info._asdict()
+    return {
+        "name": d.get("name"),
+        "path": d.get("path"),
+        "description": d.get("description"),
+        "digits": d.get("digits"),
+        "point": d.get("point"),
+        "trade_tick_size": d.get("trade_tick_size"),
+        "trade_tick_value": d.get("trade_tick_value"),
+        "trade_contract_size": d.get("trade_contract_size"),
+        "volume_min": d.get("volume_min"),
+        "volume_step": d.get("volume_step"),
+        "volume_max": d.get("volume_max"),
+    }
 
 
 def tick(symbol: str) -> dict[str, Any]:

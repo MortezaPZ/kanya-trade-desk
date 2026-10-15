@@ -18,6 +18,7 @@ build/
 .vscode/
 *.log
 data/runtime/
+runtime/
 *.sqlite
 *.db
 Thumbs.db

@@ -115,6 +115,19 @@ def snapshot(candles: list[dict[str, Any]], timeframe: str) -> dict[str, Any]:
     }
 
 
+def atr_like(candles: list[dict[str, Any]], period: int = 14) -> float:
+    if len(candles) < 2:
+        return 0.0
+    trs: list[float] = []
+    for i in range(1, len(candles)):
+        high = candles[i]["high"]
+        low = candles[i]["low"]
+        prev = candles[i - 1]["close"]
+        trs.append(max(high - low, abs(high - prev), abs(low - prev)))
+    window = trs[-period:] if len(trs) >= period else trs
+    return sum(window) / len(window) if window else 0.0
+
+
 def align_frames(frames: list[dict[str, Any]]) -> str:
     biases = [f["trend"] for f in frames]
     if biases and all(b == "up" for b in biases):

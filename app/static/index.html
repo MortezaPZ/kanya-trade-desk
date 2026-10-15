@@ -4,31 +4,56 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>میز خصوصی بازار</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/style.css?v=2" />
 </head>
 <body>
   <header>
     <div>
       <h1>میز خصوصی بازار</h1>
-      <p class="muted">فقط خواندن از متاتریدر ۵ — سفارش از اینجا ارسال نمی‌شود</p>
+      <p class="muted">فقط خواندن از متاتریدر ۵ — ورود و خروج دست خودتان است؛ سودی تضمین نمی‌شود</p>
     </div>
-    <div id="account-chip" class="chip">حساب بارگذاری نشده</div>
+    <div class="chips">
+      <div id="account-chip" class="chip">حساب بارگذاری نشده</div>
+      <div id="engine-chip" class="chip">موتور تحلیل: محلی</div>
+    </div>
   </header>
 
+  <p id="banner" class="banner hidden"></p>
+
   <section class="row">
-    <label>نماد
-      <input id="symbol" value="XAUUSD" />
+    <label>جستجوی نماد
+      <input id="search" placeholder="طلا، نفت، BTC، EUR ..." />
     </label>
-    <button id="load">وضعیت بازار</button>
-    <button id="brief" class="primary">مشاوره ساخت‌یافته</button>
+    <label>نماد فعال
+      <input id="symbol" list="symbol-list" value="XAUUSD" />
+      <datalist id="symbol-list"></datalist>
+    </label>
+    <label>حد ضرر (تیک، خالی = خودکار)
+      <input id="stop" type="number" min="0" step="1" placeholder="خودکار" />
+    </label>
+    <button id="watch">واچ‌لیست صبح</button>
+    <button id="load">وضعیت نماد</button>
+    <button id="brief" class="primary">مشاوره قبل از ورود</button>
+    <button id="review">مرور بعد از معامله</button>
   </section>
 
+  <section class="card">
+    <label>دلیل ورود یا ایدهٔ معامله (اختیاری، فقط برای مرور محلی)
+      <textarea id="entry-note" maxlength="500" rows="3" placeholder="چه چیزی باعث شد این موقعیت را بررسی کنید؟"></textarea>
+    </label>
+  </section>
+
+  <p id="privacy-note" class="privacy-note hidden"></p>
+
+  <section id="exposure" class="card"></section>
+  <section id="watchlist" class="grid"></section>
   <section id="tick" class="card"></section>
   <section id="frames" class="grid"></section>
   <section id="briefing" class="card"></section>
   <section id="positions" class="card"></section>
+  <section id="review-box" class="card"></section>
   <p id="error" class="error"></p>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=2"></script>
 </body>
 </html>

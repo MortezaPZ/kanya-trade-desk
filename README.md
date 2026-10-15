@@ -5,7 +5,7 @@ Local, private assistant for MetaTrader 5. Phase 1 is **read-only**: it reads th
 ## What it does
 
 - Reads balance, equity, open positions, and deal history from the local terminal
-- Snapshots any symbol the broker exposes (metals, energy, indices, FX, crypto)
+- Lists symbols available in the terminal and fetches selected market data on demand (metals, energy, indices, FX, crypto, and other instruments)
 - Builds a multi-timeframe view: trend, simple structure, candle patterns
 - Returns a short briefing: market, risk note, what to watch
 - Suggests a position size from equity — advisory only
@@ -18,6 +18,10 @@ Local, private assistant for MetaTrader 5. Phase 1 is **read-only**: it reads th
 
 ## Run locally (Windows, same machine as the terminal)
 
+Open and log in to the broker’s MetaTrader 5 terminal first, then double-click `start.bat`. The packaged app attaches to that terminal directly. A portable terminal under `runtime\mt5` is optional and is not included in the client ZIP. `start.bat` creates the local Python environment on first run and opens the dashboard after the server starts.
+
+Or run manually:
+
 ```
 python -m venv .venv
 .venv\Scripts\activate
@@ -28,7 +32,7 @@ python -m app.main
 
 Open `http://127.0.0.1:8787`
 
-Fill `.env` with terminal login (or leave login blank if the terminal is already open). Put the analysis-engine key in `.env` only.
+The app does not store broker passwords; log in through the broker terminal. It binds only to a loopback address. If an external analysis engine is configured, it receives market quotes and candles only; account figures, open positions, and entry notes stay local. Persian operator notes: `docs/CLIENT.md`.
 
 ## Tests
 

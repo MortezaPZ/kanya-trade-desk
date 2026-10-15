@@ -2,16 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from app.analysis import align_frames, snapshot
-from app.briefing import engine_brief
+from app import desk, journal
 from app.config import settings
-from app import mt5_bridge
-from app.risk import exposure, size_hint
 
 STATIC = Path(__file__).resolve().parent / "static"
 
@@ -23,7 +20,9 @@ class BriefRequest(BaseModel):
     symbol: str
     timeframes: list[str] | None = None
     stop_distance: float = Field(default=0, ge=0)
-    tick_value_per_lot: float = Field(default=1, gt=0)
+    tick_value_per_lot: float = Field(default=0, ge=0)
+    entry_note: str = Field(default="", max_length=500)
+    save: bool = True
 
 
 @app.get("/")
@@ -33,25 +32,42 @@ def index():
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "read_only": True, "sends_orders": False}
+    st = desk.status()
+    return {
+        "ok": True,
+        "read_only": True,
+        "sends_orders": False,
+        "connected": st["connected"],
+        "engine_configured": st["engine_configured"],
+        "error": st["error"],
+    }
+
+
+@app.get("/api/status")
+def api_status():
+    return desk.status()
 
 
 @app.get("/api/account")
 def api_account():
+    st = desk.status()
+    if not st["connected"]:
+        raise HTTPException(503, st["error"] or "terminal unavailable")
+    return st
+
+
+@app.get("/api/symbols")
+def api_symbols(q: str = Query(default="")):
     try:
-        mt5_bridge.initialize()
-        acc = mt5_bridge.account()
-        pos = mt5_bridge.positions()
-        return {"account": acc, "positions": pos, "exposure": exposure(acc, pos)}
+        return desk.catalog(q)
     except Exception as exc:
         raise HTTPException(503, str(exc)) from exc
 
 
-@app.get("/api/symbols")
-def api_symbols():
+@app.get("/api/watchlist")
+def api_watchlist():
     try:
-        mt5_bridge.initialize()
-        return {"symbols": mt5_bridge.symbols()}
+        return desk.watchlist()
     except Exception as exc:
         raise HTTPException(503, str(exc)) from exc
 
@@ -59,19 +75,9 @@ def api_symbols():
 @app.get("/api/market/{symbol}")
 def api_market(symbol: str):
     try:
-        mt5_bridge.initialize()
-        tfs = settings.timeframes()
-        frames = []
-        for tf in tfs:
-            candles = mt5_bridge.rates(symbol, tf)
-            frames.append(snapshot(candles, tf))
-        return {
-            "symbol": symbol.upper(),
-            "tick": mt5_bridge.tick(symbol),
-            "frames": frames,
-            "alignment": align_frames(frames),
-            "watchlist": settings.watch_symbols(),
-        }
+        data = desk.build_market(symbol)
+        data["watchlist"] = settings.watch_symbols()
+        return data
     except Exception as exc:
         raise HTTPException(503, str(exc)) from exc
 
@@ -79,26 +85,15 @@ def api_market(symbol: str):
 @app.post("/api/briefing")
 def api_briefing(req: BriefRequest):
     try:
-        mt5_bridge.initialize()
-        acc = mt5_bridge.account()
-        pos = mt5_bridge.positions()
-        tfs = req.timeframes or settings.timeframes()
-        frames = [snapshot(mt5_bridge.rates(req.symbol, tf), tf) for tf in tfs]
-        payload = {
-            "symbol": req.symbol.upper(),
-            "tick": mt5_bridge.tick(req.symbol),
-            "frames": frames,
-            "alignment": align_frames(frames),
-            "exposure": exposure(acc, pos),
-            "positions": pos,
-            "size_hint": size_hint(
-                float(acc.get("equity") or 0),
-                settings.risk_per_trade_pct,
-                req.stop_distance,
-                req.tick_value_per_lot,
-            ),
-        }
-        payload["briefing"] = engine_brief(payload)
+        payload = desk.build_briefing(
+            req.symbol,
+            req.stop_distance,
+            req.tick_value_per_lot,
+            req.timeframes,
+            req.entry_note,
+        )
+        if req.save:
+            payload["journal"] = desk.save_brief(payload)
         return payload
     except Exception as extra:
         raise HTTPException(503, str(extra)) from extra
@@ -107,14 +102,44 @@ def api_briefing(req: BriefRequest):
 @app.get("/api/history")
 def api_history():
     try:
-        mt5_bridge.initialize()
-        return {"deals": mt5_bridge.deals()}
+        desk.connect()
+        return {"deals": desk.deals(), "journal": journal.recent()}
     except Exception as exc:
         raise HTTPException(503, str(exc)) from exc
 
 
+@app.get("/api/review/{symbol}")
+def api_review(symbol: str):
+    try:
+        return desk.review(symbol)
+    except Exception as extra:
+        raise HTTPException(503, str(extra)) from extra
+
+
 def run():
+    import threading
+    import time
+    import urllib.error
+    import urllib.request
+    import webbrowser
+
     import uvicorn
+
+    if settings.app_open_browser:
+        url = f"http://{settings.app_host}:{settings.app_port}"
+
+        def open_when_ready() -> None:
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                try:
+                    with urllib.request.urlopen(url, timeout=1) as response:
+                        if 200 <= response.status < 400:
+                            webbrowser.open(url)
+                            return
+                except (OSError, urllib.error.URLError):
+                    time.sleep(0.25)
+
+        threading.Thread(target=open_when_ready, daemon=True).start()
 
     uvicorn.run("app.main:app", host=settings.app_host, port=settings.app_port, reload=False)
 

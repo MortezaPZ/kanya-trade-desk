@@ -17,6 +17,7 @@ def exposure(account: dict[str, Any], positions: list[dict[str, Any]]) -> dict[s
         "open_count": len(positions),
         "profit_by_symbol": by_symbol,
         "used_margin_pct": _pct(account.get("margin"), equity),
+        "floating_pct": _pct(floating, equity),
     }
 
 
@@ -29,10 +30,29 @@ def size_hint(equity: float, risk_pct: float, stop_distance: float, tick_value_p
     return {
         "risk_pct": risk_pct,
         "risk_money": round(risk_money, 2),
-        "suggested_lots": round(max(lots, 0), 2),
+        "suggested_lots": round(max(lots, 0), 6),
+        "stop_distance": stop_distance,
+        "tick_value_per_lot": tick_value_per_lot,
         "advisory_only": True,
         "sends_order": False,
     }
+
+
+def normalize_lots(
+    lots: float,
+    volume_min: float,
+    volume_step: float,
+    volume_max: float = 0,
+) -> tuple[float, bool]:
+    """Round down to broker limits; never increase size to meet the minimum lot."""
+    if lots <= 0 or volume_step <= 0 or volume_min <= 0:
+        return 0.0, False
+    capped = min(lots, volume_max) if volume_max > 0 else lots
+    steps = int((capped + 1e-12) / volume_step)
+    rounded = round(steps * volume_step, 6)
+    if rounded + 1e-9 < volume_min:
+        return 0.0, True
+    return rounded, False
 
 
 def _pct(part: Any, whole: float) -> float:
