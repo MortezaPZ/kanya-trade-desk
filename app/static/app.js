@@ -89,13 +89,15 @@ function renderFrames(frames) {
 
 async function refreshStatus() {
   const st = await getJson("/api/status");
-  $("engine-chip").textContent = st.engine_configured ? "موتور بیرونی: پیکربندی‌شده" : "تحلیل محلی: قواعد ساده";
+  $("engine-chip").textContent = st.engine_configured
+    ? `تحلیل AI: آمادهٔ درخواست (${st.engine_protocol || "API"})`
+    : "تحلیل AI: API لازم است";
   const privacy = $("privacy-note");
   if (st.engine_configured) {
-    privacy.textContent = "برای تحلیل بیرونی فقط نماد، قیمت و داده‌های نمودار ارسال می‌شود؛ اطلاعات حساب، معاملات باز و یادداشت شما در درخواست نیست.";
+    privacy.textContent = "درخواست تحلیل فقط نماد، قیمت، شاخص‌های فنی و حداکثر ۴۰ کندل بسته‌شده از هر تایم‌فریم را می‌فرستد؛ موجودی، معاملات باز، حجم محاسبه‌شده و یادداشت شما محلی می‌مانند. اتصال API با اولین درخواست تحلیل سنجیده می‌شود.";
     privacy.classList.remove("hidden");
   } else {
-    privacy.textContent = "تحلیل محلی است و داده‌ای به سرویس بیرونی فرستاده نمی‌شود.";
+    privacy.textContent = `${st.engine_message_fa || "تنظیمات API کامل نیست."} تا آن زمان تحلیل AI انجام نمی‌شود و قواعد محلی را نباید تحلیل AI تلقی کرد.`;
     privacy.classList.remove("hidden");
   }
   if (!st.connected) {
@@ -181,13 +183,19 @@ $("brief").onclick = async () => {
     const brief = data.briefing;
     const hint = data.size_hint;
     const box = $("briefing");
+    if (brief.source !== "engine") {
+      $("engine-chip").textContent = `تحلیل AI: غیرفعال — ${brief.engine_message_fa || "پاسخ معتبر دریافت نشد"}`;
+    } else {
+      $("engine-chip").textContent = `تحلیل AI: پاسخ دریافت شد (${brief.protocol || "API"})`;
+    }
     const content = [
-      element("h3", "مشاوره قبل از ورود"),
+      element("h3", brief.source === "engine" ? `تحلیل AI پیش از ورود (${brief.protocol || "API"})` : "مشاوره پیش از ورود — تحلیل AI فعال نیست"),
       element("p", brief.market_fa || ""),
+      element("p", `سناریوهای مشروط: ${brief.scenario_fa || "—"}`),
       element("p", `ریسک: ${brief.risk_fa || ""}`),
       element("p", `زیر نظر: ${brief.watch_fa || ""}`),
       element("p", brief.fit_fa || ""),
-      element("p", `حجم پیشنهادی ${hint.suggested_lots} لات برای ریسک ${hint.risk_pct}٪ — سفارش ارسال نمی‌شود. منبع: ${brief.source}`, "small"),
+      element("p", `حجم پیشنهادی ${hint.suggested_lots} لات برای ریسک ${hint.risk_pct}٪ — محاسبه محلی است و سفارش ارسال نمی‌شود. ${brief.source === "engine" ? "تفسیر بازار از API است." : `وضعیت API: ${brief.engine_message_fa || "پاسخ قابل‌استفاده دریافت نشد."}`}`, "small"),
     ];
     if (hint.minimum_lot_exceeds_risk) {
       content.push(element("p", "ریسک مجاز از حداقل حجم بروکر کمتر است؛ حجم پیشنهادی صفر شده است.", "error"));

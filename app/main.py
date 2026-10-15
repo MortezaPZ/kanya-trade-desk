@@ -39,6 +39,9 @@ def health():
         "sends_orders": False,
         "connected": st["connected"],
         "engine_configured": st["engine_configured"],
+        "engine_status": st["engine_status"],
+        "engine_protocol": st["engine_protocol"],
+        "engine_message_fa": st["engine_message_fa"],
         "error": st["error"],
     }
 

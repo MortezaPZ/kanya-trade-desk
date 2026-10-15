@@ -7,7 +7,8 @@ Local, private assistant for MetaTrader 5. Phase 1 is **read-only**: it reads th
 - Reads balance, equity, open positions, and deal history from the local terminal
 - Lists symbols available in the terminal and fetches selected market data on demand (metals, energy, indices, FX, crypto, and other instruments)
 - Builds a multi-timeframe view: trend, simple structure, candle patterns
-- Returns a short briefing: market, risk note, what to watch
+- Sends the selected symbol's chart data to the configured AI API and returns a Persian market analysis with conditional scenarios
+- Calculates account risk and position-size guidance locally; account details, positions, and entry notes are not sent to the AI provider
 - Suggests a position size from equity — advisory only
 
 ## What it does not do
@@ -32,7 +33,7 @@ python -m app.main
 
 Open `http://127.0.0.1:8787`
 
-The app does not store broker passwords; log in through the broker terminal. It binds only to a loopback address. If an external analysis engine is configured, it receives market quotes and candles only; account figures, open positions, and entry notes stay local. Persian operator notes: `docs/CLIENT.md`.
+The app does not store broker passwords; log in through the broker terminal. It binds only to a loopback address. AI market analysis requires separately billed API access; a chat subscription alone is not an API key. Configure `LLM_PROTOCOL`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, and the authentication headers from the provider's API documentation in the local `.env` file. Until a valid API is configured and responds, the app clearly marks AI analysis as unavailable instead of presenting local rules as AI output. Persian setup and privacy notes: `docs/CLIENT.md`.
 
 ## Tests
 

@@ -37,6 +37,7 @@ def test_engine_market_payload_excludes_account_and_trade_details():
         "symbol": "XAUUSD",
         "tick": {"bid": 2400, "ask": 2400.3},
         "frames": [],
+        "analysis_candles": {"H1": [{"time": "2026-10-15T10:00:00+00:00", "open": 1, "high": 2, "low": 1, "close": 2}]},
         "alignment": "aligned_up",
         "atr": 3.5,
         "exposure": {"equity": 1000},
@@ -48,6 +49,7 @@ def test_engine_market_payload_excludes_account_and_trade_details():
         "symbol": "XAUUSD",
         "tick": payload["tick"],
         "frames": [],
+        "completed_candles": payload["analysis_candles"],
         "alignment": "aligned_up",
         "atr": 3.5,
     }
@@ -59,6 +61,7 @@ def test_engine_brief_sends_market_only_and_keeps_risk_local(monkeypatch):
         "alignment": "aligned_up",
         "tick": {"bid": 2400, "ask": 2400.3},
         "frames": [],
+        "analysis_candles": {"H1": [{"time": "2026-10-15T10:00:00+00:00", "open": 2390, "high": 2400, "low": 2388, "close": 2398}]},
         "atr": 3.5,
         "exposure": {"balance": 1000, "equity": 900, "open_count": 2, "used_margin_pct": 10},
         "positions": [{"ticket": 123, "symbol": "XAUUSD"}],
@@ -74,6 +77,7 @@ def test_engine_brief_sends_market_only_and_keeps_risk_local(monkeypatch):
         def json(self):
             return {"choices": [{"message": {"content": json.dumps({
                 "market_fa": "تحلیل بازار",
+                "scenario_fa": "در صورت تثبیت بالای سطح اخیر، سناریوی صعودی؛ در غیر این صورت صبر.",
                 "watch_fa": "مراقب باشید",
                 "risk_fa": "متن ساختگی ریسک",
                 "fit_fa": "متن ساختگی تناسب",
@@ -81,8 +85,9 @@ def test_engine_brief_sends_market_only_and_keeps_risk_local(monkeypatch):
             })}}]}
 
     class Client:
-        def __init__(self, timeout):
+        def __init__(self, timeout, follow_redirects):
             captured["timeout"] = timeout
+            captured["follow_redirects"] = follow_redirects
 
         def __enter__(self):
             return self
@@ -95,14 +100,17 @@ def test_engine_brief_sends_market_only_and_keeps_risk_local(monkeypatch):
             captured["headers"] = headers
             return Response()
 
+    monkeypatch.setattr(briefing.settings, "llm_protocol", "chat_completions")
     monkeypatch.setattr(briefing.settings, "llm_api_key", "test-key")
     monkeypatch.setattr(briefing.settings, "llm_base_url", "https://engine.example/v1")
     monkeypatch.setattr(briefing.settings, "llm_model", "test-model")
+    monkeypatch.setattr(briefing.settings, "llm_auth_header", "Authorization")
+    monkeypatch.setattr(briefing.settings, "llm_auth_prefix", "Bearer")
     monkeypatch.setattr(briefing.httpx, "Client", Client)
 
     result = briefing.engine_brief(payload)
     sent = json.loads(captured["body"]["messages"][1]["content"])
-    assert set(sent) == {"symbol", "tick", "frames", "alignment", "atr"}
+    assert set(sent) == {"symbol", "tick", "frames", "completed_candles", "alignment", "atr"}
     assert "positions" not in sent and "exposure" not in sent and "entry_note" not in sent
     assert result["risk_fa"] == local_brief(payload)["risk_fa"]
     assert result["fit_fa"] == local_brief(payload)["fit_fa"]

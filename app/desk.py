@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.analysis import align_frames, atr_like, snapshot
-from app.briefing import engine_brief
+from app.briefing import engine_brief, engine_status
 from app.config import settings
 from app import file_bridge, journal, mt5_bridge
 from app.mt5_bridge import TIMEFRAME_MAP
@@ -16,7 +16,7 @@ _api = mt5_bridge
 
 
 def engine_configured() -> bool:
-    return bool(settings.llm_api_key and settings.llm_base_url and settings.llm_model)
+    return engine_status()["configured"]
 
 
 def connect() -> None:
@@ -54,6 +54,7 @@ def connect() -> None:
 
 
 def status() -> dict[str, Any]:
+    engine = engine_status()
     try:
         connect()
         acc = _api.account()
@@ -62,7 +63,10 @@ def status() -> dict[str, Any]:
             "connected": True,
             "read_only": True,
             "sends_orders": False,
-            "engine_configured": engine_configured(),
+            "engine_configured": engine["configured"],
+            "engine_status": engine["status"],
+            "engine_protocol": engine["protocol"],
+            "engine_message_fa": engine["message_fa"],
             "account": acc,
             "positions": pos,
             "exposure": exposure(acc, pos),
@@ -73,7 +77,10 @@ def status() -> dict[str, Any]:
             "connected": False,
             "read_only": True,
             "sends_orders": False,
-            "engine_configured": engine_configured(),
+            "engine_configured": engine["configured"],
+            "engine_status": engine["status"],
+            "engine_protocol": engine["protocol"],
+            "engine_message_fa": engine["message_fa"],
             "account": None,
             "positions": [],
             "exposure": {},
@@ -85,6 +92,7 @@ def build_market(
     symbol: str,
     timeframes: list[str] | None = None,
     refresh_file_data: bool = True,
+    include_analysis_candles: bool = False,
 ) -> dict[str, Any]:
     connect()
     symbol = symbol.strip()
@@ -108,7 +116,7 @@ def build_market(
     tick_size = float(spec.get("trade_tick_size") or spec.get("point") or 0)
     tick_value = float(spec.get("trade_tick_value") or 0)
     stop_ticks = atr / tick_size if tick_size else 0.0
-    return {
+    result = {
         "symbol": spec.get("name") or symbol.upper(),
         "spec": spec,
         "tick": _api.tick(symbol),
@@ -118,6 +126,15 @@ def build_market(
         "stop_ticks": stop_ticks,
         "tick_value_per_lot": tick_value,
     }
+    if include_analysis_candles:
+        result["analysis_candles"] = {
+            tf: [
+                {key: candle[key] for key in ("time", "open", "high", "low", "close")}
+                for candle in (candles[tf][:-1] if len(candles[tf]) > 1 else candles[tf])[-40:]
+            ]
+            for tf in tfs
+        }
+    return result
 
 
 def build_briefing(
@@ -130,7 +147,7 @@ def build_briefing(
     connect()
     acc = _api.account()
     pos = _api.positions()
-    market = build_market(symbol, timeframes)
+    market = build_market(symbol, timeframes, include_analysis_candles=True)
     stop = stop_distance if stop_distance > 0 else float(market["stop_ticks"] or 0)
     tick_val = tick_value_per_lot if tick_value_per_lot > 0 else float(market["tick_value_per_lot"] or 0)
     hint = size_hint(float(acc.get("equity") or 0), settings.risk_per_trade_pct, stop, tick_val)
@@ -151,6 +168,7 @@ def build_briefing(
         "entry_note": str(entry_note or "").strip(),
     }
     payload["briefing"] = engine_brief(payload)
+    payload.pop("analysis_candles", None)
     return payload
 
 

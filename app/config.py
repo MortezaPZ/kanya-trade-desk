@@ -19,10 +19,16 @@ class Settings(BaseSettings):
 
     mt5_path: str = ""
     mt5_portable: bool = False
+    llm_protocol: str = ""
     llm_api_key: str = ""
     llm_base_url: str = ""
     llm_model: str = ""
+    llm_auth_header: str = ""
+    llm_auth_prefix: str = ""
+    llm_version_header: str = ""
+    llm_api_version: str = ""
     llm_timeout_seconds: int = 60
+    llm_max_output_tokens: int = 1200
 
     watchlist: str = "XAUUSD,XAGUSD,XTIUSD,US30,NAS100,EURUSD,GBPUSD,BTCUSD,ETHUSD"
     default_timeframes: str = "M15,H1,H4,D1"
