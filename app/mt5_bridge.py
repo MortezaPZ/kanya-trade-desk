@@ -23,7 +23,7 @@ def _mt5():
     try:
         import MetaTrader5 as mt5
     except ImportError as exc:
-        raise RuntimeError("MetaTrader5 package is not installed") from exc
+        raise RuntimeError(f"MetaTrader5 package could not be loaded: {exc}") from exc
     return mt5
 
 

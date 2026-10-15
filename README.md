@@ -19,7 +19,9 @@ Local, private assistant for MetaTrader 5. Phase 1 is **read-only**: it reads th
 
 ## Run locally (Windows, same machine as the terminal)
 
-Open and log in to the broker’s MetaTrader 5 terminal first, then double-click `start.bat`. The packaged app attaches to that terminal directly. A portable terminal under `runtime\mt5` is optional and is not included in the client ZIP. `start.bat` creates the local Python environment on first run and opens the dashboard after the server starts.
+Open and log in to the broker’s MetaTrader 5 terminal first, then double-click `KanyaTradeDesk.exe` in the Windows app package. It opens the dashboard in the browser automatically and has a simple close button. It does not require a terminal window or a separate Python installation. The `.env` settings and journal are stored under `%APPDATA%\KanyaTradeDesk`. A portable terminal under `runtime\mt5` is optional and is not included in the client package.
+
+For source development, `start.bat` remains available. It creates a local Python environment on first run and opens the dashboard after the server starts.
 
 Or run manually:
 

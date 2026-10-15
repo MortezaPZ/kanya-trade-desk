@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1] / "data" / "runtime"
+_config_dir = os.environ.get("APP_CONFIG_DIR")
+ROOT = (
+    Path(_config_dir) / "data" / "runtime"
+    if _config_dir
+    else Path(__file__).resolve().parents[1] / "data" / "runtime"
+)
 FILE = ROOT / "journal.jsonl"
 
 

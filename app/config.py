@@ -1,9 +1,14 @@
+import os
+from pathlib import Path
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+_config_dir = Path(os.environ.get("APP_CONFIG_DIR", Path(__file__).resolve().parents[1]))
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=str(_config_dir / ".env"), extra="ignore")
 
     app_host: str = "127.0.0.1"
     app_port: int = 8787
