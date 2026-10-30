@@ -42,7 +42,3 @@ The app does not store broker passwords; log in through the broker terminal. It 
 ```
 pytest -q
 ```
-
-## Session continuity
-
-Work in short sessions. Start from `ops/SESSION_START.md`. Before time runs out, follow `ops/SESSION_END.md`. Live state lives in `docs/HANDOFF.md`.

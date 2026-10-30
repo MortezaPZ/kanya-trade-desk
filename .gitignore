@@ -25,3 +25,9 @@ runtime/
 Thumbs.db
 desktop.ini
 node_modules/
+docs/HANDOFF.md
+docs/SESSION_LOG.md
+ops/SESSION_START.md
+ops/SESSION_END.md
+ops/MASTER_PASTE.md
+ops/NEXT_PROMPT.md
