@@ -64,7 +64,7 @@ New-Item -ItemType Directory -Path $serverPackage | Out-Null
 Copy-Item -Path (Join-Path $guiBuild "*") -Destination $releaseDir -Recurse -Force
 Copy-Item -Path (Join-Path $serverBuild "*") -Destination $serverPackage -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot ".env.example") -Destination $releaseDir
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot "docs\CLIENT.md") -Destination (Join-Path $releaseDir "راهنمای فارسی.txt")
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot "docs\USER-GUIDE-FA.md") -Destination (Join-Path $releaseDir "راهنمای فارسی.txt")
 Compress-Archive -Path (Join-Path $releaseDir "*") -DestinationPath $zipPath -CompressionLevel Optimal
 
 Write-Output $zipPath

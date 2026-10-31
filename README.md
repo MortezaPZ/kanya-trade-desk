@@ -35,7 +35,7 @@ python -m app.main
 
 Open `http://127.0.0.1:8787`
 
-The app does not store broker passwords; log in through the broker terminal. It binds only to a loopback address. AI market analysis requires separately billed API access; a chat subscription alone is not an API key. Configure `LLM_PROTOCOL`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, and the authentication headers from the provider's API documentation in the local `.env` file. Until a valid API is configured and responds, the app clearly marks AI analysis as unavailable instead of presenting local rules as AI output. Persian setup and privacy notes: `docs/CLIENT.md`.
+The app does not store broker passwords; log in through the broker terminal. It binds only to a loopback address. AI market analysis requires separately billed API access; a chat subscription alone is not an API key. Configure `LLM_PROTOCOL`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, and the authentication headers from the provider's API documentation in the local `.env` file. Until a valid API is configured and responds, the app clearly marks AI analysis as unavailable instead of presenting local rules as AI output. Persian installation, usage, and privacy guide: [docs/USER-GUIDE-FA.md](docs/USER-GUIDE-FA.md).
 
 ## Tests
 
