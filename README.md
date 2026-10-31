@@ -1,44 +1,46 @@
-# Private market desk
+# Local MetaTrader 5 Market Desk
 
-Local, private assistant for MetaTrader 5. Phase 1 is **read-only**: it reads the account and market, then returns a structured briefing. It does not place, change, or close orders.
+A Windows dashboard for reviewing account activity and market data through a local MetaTrader 5 terminal.
 
-## What it does
+## Overview
 
-- Reads balance, equity, open positions, and deal history from the local terminal
-- Lists symbols available in the terminal and fetches selected market data on demand (metals, energy, indices, FX, crypto, and other instruments)
-- Builds a multi-timeframe view: trend, simple structure, candle patterns
-- Sends the selected symbol's chart data to the configured AI API and returns a Persian market analysis with conditional scenarios
-- Calculates account risk and position-size guidance locally; account details, positions, and entry notes are not sent to the AI provider
-- Suggests a position size from equity — advisory only
+The app runs on the same machine as the broker terminal. It reads account balances, open positions, deal history, and available symbols, then builds a multi-timeframe market view. Optional AI analysis uses only chart data for the selected symbol and returns a Persian summary with conditional scenarios.
 
-## What it does not do
+Risk and position-size guidance is calculated locally and is advisory. Account balances, positions, and entry notes are not sent to the AI provider.
 
-- No order send, no auto-entry, no auto-exit
-- No public cloud workspace for the trader’s book
-- No profit guarantee
+## Safety and limitations
 
-## Run locally (Windows, same machine as the terminal)
+- Read-only: the app cannot place, modify, or close orders.
+- Broker credentials stay in the broker terminal; the app does not store broker passwords.
+- The web dashboard binds to the local loopback address.
+- AI analysis requires a separately configured and billed API. Selected chart data is sent to that provider.
+- Market analysis is informational and does not guarantee profit.
+- Until a valid AI API responds, the app marks analysis as unavailable rather than presenting local rules as AI output.
 
-Open and log in to the broker’s MetaTrader 5 terminal first, then double-click `KanyaTradeDesk.exe` in the Windows app package. It opens the dashboard in the browser automatically and has a simple close button. It does not require a terminal window or a separate Python installation. The `.env` settings and journal are stored under `%APPDATA%\KanyaTradeDesk`. A portable terminal under `runtime\mt5` is optional and is not included in the client package.
+## Run on Windows
 
-For source development, `start.bat` remains available. It creates a local Python environment on first run and opens the dashboard after the server starts.
+1. Open the broker's MetaTrader 5 terminal and sign in.
+2. Launch KanyaTradeDesk.exe from the Windows release package.
+3. Open the dashboard at http://127.0.0.1:8787 if it does not open automatically.
 
-Or run manually:
+The application stores its local settings and journal under the current user's %APPDATA%\KanyaTradeDesk directory. A portable MT5 terminal is optional and is not included.
 
-```
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-python -m app.main
-```
+## Develop from source
 
-Open `http://127.0.0.1:8787`
+The start.bat script creates a local Python environment on first run and starts the dashboard. To run the steps manually:
 
-The app does not store broker passwords; log in through the broker terminal. It binds only to a loopback address. AI market analysis requires separately billed API access; a chat subscription alone is not an API key. Configure `LLM_PROTOCOL`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, and the authentication headers from the provider's API documentation in the local `.env` file. Until a valid API is configured and responds, the app clearly marks AI analysis as unavailable instead of presenting local rules as AI output. Persian installation, usage, and privacy guide: [docs/USER-GUIDE-FA.md](docs/USER-GUIDE-FA.md).
+    python -m venv .venv
+    .venv\Scripts\activate
+    pip install -r requirements.txt
+    copy .env.example .env
+    python -m app.main
+
+Configure LLM_PROTOCOL, LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, and the authentication headers in the local .env file using the selected provider's API documentation.
+
+## Documentation
+
+Persian installation, usage, and privacy instructions are available in the [Persian user guide](docs/USER-GUIDE-FA.md).
 
 ## Tests
 
-```
-pytest -q
-```
+    pytest -q
