@@ -44,3 +44,10 @@ Persian installation, usage, and privacy instructions are available in the [Pers
 ## Tests
 
     pytest -q
+
+## Folder guides
+
+- [`app/`](<app/README.md>)
+- [`docs/`](<docs/README.md>)
+- [`ea/`](<ea/README.md>)
+- [`tests/`](<tests/README.md>)
